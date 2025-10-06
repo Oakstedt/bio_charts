@@ -1,0 +1,70 @@
+ body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            flex-direction: column;
+            margin: 0;
+            padding: 20px;
+        }
+        h2 {
+            text-align: center;
+        }
+        .drop-zone {
+            width: 80%;
+            max-width: 600px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .drop-zone.dragover {
+            background-color: #e9e9e9;
+        }
+        .status-message {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        .error-message {
+            color: #d9534f;
+        }
+        .success-message {
+            color: #5cb85c;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        #controls h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        #controls button {
+            cursor: pointer;
+        }
+
+        #controls .controls-group {
+        margin-bottom: 20px; /* Adjust this value to add more space */
+        }
+
+        .button-group {
+            display: flex; /* Enable Flexbox layout */
+            justify-content: center; /* Center items horizontally */
+            align-items: center; /* Center items vertically */
+            gap: 10px; /* Add some space between the buttons */
+            margin-top: 10px; /* Adjust this to control spacing above the buttons */
+        }
+
+        #chart-container {
+        margin-top: 10px; /* Reduce this value for less space */
+        }

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Plotter</title>
+    <script src="https://cdn.plot.ly/plotly-2.30.0.min.js" charset="utf-8"></script>
+    <script src="/static/Plotter.js"></script>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+    <h2>Drag & Drop CSV File</h2>
+    <div class="drop-zone" id="drop-zone">
+        <p>Drag your CSV file here or click to select one</p>
+    </div>
+    <input type="file" id="file-input" accept=".csv" style="display: none;">
+    <div id="status-message" class="status-message"></div>
+
+    <div id="controls" style="display: none;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div>
+                <h4>Data Selection</h4>
+                <label for="x-select">X-Axis:</label>
+                <select id="x-select"></select>
+                
+                <label for="y-select">Y-Axis:</label>
+                <select id="y-select"></select>
+            </div>
+
+            <div>
+                <h4>Visualization Options</h4>
+                <label for="chart-type">Chart Type:</label>
+                <select id="chart-type">
+                    <option value="scatter">Scatter Plot</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="box">Box Plot</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="button-group" style="margin-top: 20px;">
+            <button id="transpose-button">Transpose Data</button>
+            <button id="plot-button">Generate Plot</button>
+            <button id="download-button">Download as PNG</button>
+        </div>
+    </div>
+
+    <div id="chart-container" style="width: 100%; max-width: 900px; height: 500px;"></div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const statusMessage = document.getElementById('status-message');
+        const controls = document.getElementById('controls');
+        const downloadButton = document.getElementById('download-button');
+        const transposeButton = document.getElementById('transpose-button');
+        
+        const plotter = new Plotter('chart-container', 'x-select', 'y-select', 'plot-button', 'chart-type');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        function handleFiles(files) {
+            if (files.length === 0) {
+                return;
+            }
+            const file = files[0];
+            if (file.name.endsWith('.csv')) {
+                uploadFile(file);
+            } else {
+                statusMessage.textContent = 'Invalid file type. Please upload a .csv file.';
+                statusMessage.className = 'status-message error-message';
+            }
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            statusMessage.textContent = 'Uploading...';
+            statusMessage.className = 'status-message';
+            
+            Plotly.purge('chart-container');
+            controls.style.display = 'none';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                plotter.loadData(data);
+                statusMessage.textContent = 'File uploaded successfully! Select columns to plot.';
+                statusMessage.className = 'status-message success-message';
+                controls.style.display = 'flex';
+                
+            } catch (error) {
+                statusMessage.textContent = `Error: ${error.message}`;
+                statusMessage.className = 'status-message error-message';
+                console.error('Upload failed:', error);
+            }
+        }
+        
+        downloadButton.addEventListener('click', () => {
+            const plotDiv = document.getElementById('chart-container');
+            
+            if (plotDiv.childElementCount === 0 || !plotDiv.data) {
+                statusMessage.textContent = 'Please generate a plot first.';
+                statusMessage.className = 'status-message error-message';
+                return;
+            }
+
+            const filename = plotDiv.layout.title.text || 'my_plot';
+
+            Plotly.downloadImage(plotDiv, {
+                format: 'png',
+                filename: filename,
+                height: 600,
+                width: 800
+            });
+        });
+
+        transposeButton.addEventListener('click', async () => {
+            if (!plotter.processedData) {
+                statusMessage.textContent = 'Please upload a file first.';
+                statusMessage.className = 'status-message error-message';
+                return;
+            }
+
+            statusMessage.textContent = 'Transposing data...';
+            statusMessage.className = 'status-message';
+            
+            try {
+                const response = await fetch('/transpose', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(plotter.processedData),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error);
+                }
+
+                const data = await response.json();
+                
+                plotter.loadData(data);
+                
+                statusMessage.textContent = 'Data transposed successfully! Select new columns to plot.';
+                statusMessage.className = 'status-message success-message';
+                
+            } catch (error) {
+                statusMessage.textContent = `Error transposing data: ${error.message}`;
+                statusMessage.className = 'status-message error-message';
+                console.error('Transpose failed:', error);
+            }
+        });
+    </script>
