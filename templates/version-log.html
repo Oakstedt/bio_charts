@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Version History</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+    <div id="nav-container">
+        <a href="/" class="site-title">Charts Tool v0.1</a>
+        <button id="menu-toggle" aria-label="Toggle navigation">
+            <span class="burger-icon"></span>
+        </button>
+        <nav id="main-nav">
+            <a href="/">Home (Visualizer)</a>
+            <a href="/about">About</a>
+            <a href="/version-log">Version Log</a>
+        </nav>
+    </div>
+    </header>
+
+    <header>
+        </header>
+
+    <main class="content-wrapper">
+        <h2>Version History Log</h2>
+        
+        <section class="version-entry">
+            <h3>Version 0.1 (Initial Release)</h3>
+            <p class="release-date">[Current Date]</p>
+            <ul>
+                <li>**Core Feature:** Initial drag-and-drop CSV file upload and processing.</li>
+                <li>**Visualization:** Scatter, Bar, and Box plots implemented using Plotly.js.</li>
+                <li>**Interactivity:** Data transposition, dynamic column selection, and image download (PNG).</li>
+            </ul>
+        </section>
+        
+        </main>
+</body>
+
+<script>
+            document.addEventListener('DOMContentLoaded', () => {
+            const toggleButton = document.getElementById('menu-toggle');
+            const navMenu = document.getElementById('main-nav');
+
+            toggleButton.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+            });
+        });
+</script>
+
+</html>
+
