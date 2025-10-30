@@ -3,7 +3,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            height: 50vh;
             background-color: #f4f4f4;
             flex-direction: column;
             margin: 0;
@@ -67,4 +67,96 @@
 
         #chart-container {
         margin-top: 10px; /* Reduce this value for less space */
+        }
+
+        /* --- Navigation and Header Styling --- */
+        header {
+            width: 100%;
+            background-color: #333;
+            padding: 10px 0;
+            position: fixed; /* Keep menu visible at top */
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        #nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .site-title {
+            color: white;
+            font-size: 1.5em;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        #menu-toggle {
+            display: none; /* Hidden on desktop */
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .burger-icon, .burger-icon::before, .burger-icon::after {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .burger-icon::before, .burger-icon::after {
+            content: '';
+            position: absolute;
+        }
+
+        .burger-icon::before {
+            transform: translateY(-8px);
+        }
+
+        .burger-icon::after {
+            transform: translateY(8px);
+        }
+
+        #main-nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        /* Add margin to body to account for fixed header */
+        body {
+            padding-top: 60px; /* Adjust based on header height */
+        }
+
+        /* Mobile/Tablet Styles (Burger Menu Active) */
+        @media (max-width: 768px) {
+            #menu-toggle {
+                display: block; /* Show burger button */
+            }
+
+            #main-nav {
+                display: none; /* Hide nav links by default */
+                flex-direction: column;
+                width: 100%;
+                position: absolute;
+                top: 60px; /* Below the header */
+                left: 0;
+                background-color: #444;
+                padding-bottom: 10px;
+            }
+            
+            #main-nav.active {
+                display: flex; /* Show when active */
+            }
+
+            #main-nav a {
+                margin: 10px 20px;
+            }
         }

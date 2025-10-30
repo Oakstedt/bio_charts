@@ -16,6 +16,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def home():
     return render_template('index.html') # This will now serve the HTML file
 
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/version-log')
+def version_log():
+    return render_template('version-log.html')
+
 # The main route for handling CSV file uploads
 @app.route('/upload', methods=['POST'])
 def upload_file():
