@@ -161,6 +161,7 @@ class Plotter {
             title: `${title} of ${xColumn} vs ${yColumn}`,
             xaxis: { title: xColumn },
             yaxis: { title: yColumn }
+        }
         };
     }
     
