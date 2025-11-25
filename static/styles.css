@@ -24,6 +24,8 @@
             text-align: center;
             cursor: pointer;
             transition: background-color 0.3s;
+            z-index: 101;
+            
         }
         .drop-zone.dragover {
             background-color: #e9e9e9;

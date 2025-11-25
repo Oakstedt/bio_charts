@@ -160,7 +160,10 @@ class Plotter {
         return {
             title: `${title} of ${xColumn} vs ${yColumn}`,
             xaxis: { title: xColumn },
-            yaxis: { title: yColumn }
+            yaxis: { title: yColumn },
+            margin: {
+            b: 150, 
+        }
         };
     }
     
