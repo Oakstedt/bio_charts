@@ -271,13 +271,12 @@ async generatePlot() {
             },
             yaxis: { 
                 title: 'Variable',
-                tickangle: 45,
                 dtick: 1, 
-                autosize : false,
+                tickmode: 'auto',
 
             },
             margin: {
-                t: 80, 
+                t: 150, 
                 r: 10,
                 l: 250, 
                 b: 150, 
