@@ -266,27 +266,21 @@ async generatePlot() {
             title: 'Correlation Heatmap',
             xaxis: { 
                 title: 'Variable',
-                tickangle: -45, // Rotate labels for readability
+                tickangle: -45, 
                 dtick: 1,
             },
             yaxis: { 
                 title: 'Variable',
-                automargin: true,
-            // 2. ADD: Control tick label size and spacing
-            tickfont: { size: 10 }, // Maintain a reasonable, small size
-            
-            // 3. IMPORTANT: Use tickmode and tick0 to influence spacing
-            // We set tick0 to 0 and dtick to 1 to show every label, 
-            // but we rely on automargin to prevent overlap.
-            tickmode: 'linear',
-            tick0: 0.5, // Start the first tick label half-way on the first bin
-            dtick: 1, // Keep showing every tick
+                tickangle: 45,
+                dtick: 1, 
+                autosize : false,
+
             },
             margin: {
                 t: 80, 
                 r: 10,
-                l: 250, // Increased left margin for long Y-labels
-                b: 150, // Increased bottom margin for long X-labels
+                l: 250, 
+                b: 150, 
             }
         };
     }
