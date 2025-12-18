@@ -46,38 +46,92 @@ class Plotter {
         }
     }
     
-    // Generates the plot based on selected columns and chart type
-    generatePlot() {
-        const xColumn = this.xSelect.value;
-        const yColumn = this.ySelect.value;
-        const chartType = this.chartTypeSelect.value;
-        const statusMessage = document.getElementById('status-message');
-    
-        if (!this.processedData || !xColumn || !yColumn) {
+async generatePlot() { 
+    const xColumn = this.xSelect.value;
+    const yColumn = this.ySelect.value;
+    const chartType = this.chartTypeSelect.value;
+    const statusMessage = document.getElementById('status-message');
+
+    if (!this.processedData) {
+        statusMessage.textContent = 'Please upload a file first.';
+        statusMessage.className = 'status-message error-message';
+        return;
+    }
+
+    let trace = null;
+    let layout = {};
+
+    // --- 1. HEATMAP LOGIC (Fetch from Backend) ---
+    if (chartType === 'heatmap') {
+        try {
+            statusMessage.textContent = 'Calculating correlation matrix...';
+            statusMessage.className = 'status-message';
+            
+            const response = await fetch('/heatmap_data', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.processedData), 
+            });
+
+            const data = await response.json(); 
+            
+            if (!response.ok) {
+                 throw new Error(data.error || `Server error: ${response.status}`);
+            }
+
+            trace = this.getHeatmapTrace(data.z, data.labels);
+            layout = this.getHeatmapLayout(data.labels);
+
+            statusMessage.textContent = 'Heatmap generated successfully!';
+            statusMessage.className = 'status-message success-message';
+            
+        } catch (error) {
+            statusMessage.textContent = `Error generating heatmap: ${error.message}`;
+            statusMessage.className = 'status-message error-message';
+            console.error('Heatmap generation failed:', error);
             return;
         }
-    
+        
+    } else {
+        // --- 2. SCATTER/BAR/BOX DATA FETCHING AND VALIDATION ---
+        
+        if (!xColumn || !yColumn) {
+             statusMessage.textContent = 'Please select columns for X and Y axes.';
+             statusMessage.className = 'status-message error-message';
+             return;
+        }
+        
         let xData, yData;
+        
         if (chartType === 'bar' || chartType === 'box') {
-            xData = this.processedData.map(row => row['Category']);
+            // Check for transposition
+            const categoryExists = this.processedData.length > 0 && 
+                                   'Category' in this.processedData[0];
+            
+            // Use 'Category' for X if transposed, otherwise use user's selection
+            const xColumnToUse = categoryExists ? 'Category' : xColumn; 
+            
+            xData = this.processedData.map(row => row[xColumnToUse]);
             yData = this.processedData.map(row => row[yColumn]);
-    
-            if (yColumn === 'Category') {
-                statusMessage.textContent = 'Error: The Category column cannot be plotted on the Y-axis for a bar or box plot. Please select a numerical column.';
-                statusMessage.className = 'status-message error-message';
-                return;
+            
+            // Validation: Y-axis must not be the category column
+            if (yColumn === xColumnToUse && categoryExists) { 
+                 statusMessage.textContent = `Error: Cannot plot the category column ("${xColumnToUse}") on the Y-axis. Please select a numerical column.`;
+                 statusMessage.className = 'status-message error-message';
+                 return;
             }
-    
+
             statusMessage.textContent = 'Plot generated successfully!';
             statusMessage.className = 'status-message success-message';
             
-        } else {
+        } else { // Scatter plot logic
             xData = this.processedData.map(row => row[xColumn]);
             yData = this.processedData.map(row => row[yColumn]);
-    
-            const isXNumeric = typeof this.processedData[0][xColumn] === 'number';
-            const isYNumeric = typeof this.processedData[0][yColumn] === 'number';
-    
+            
+            // Scatter validation (simplified for clean data)
+            const isXNumeric = typeof xData[0] === 'number'; // Check data type via first value
+            const isYNumeric = typeof yData[0] === 'number';
+
             if (!isXNumeric || !isYNumeric) {
                 statusMessage.textContent = 'Warning: Scatter plots are best for comparing two numerical variables. Try selecting numerical columns for both axes.';
                 statusMessage.className = 'status-message error-message';
@@ -87,9 +141,7 @@ class Plotter {
             }
         }
         
-        let trace = null;
-        let layout = {};
-    
+        // --- 3. Final trace and layout assignment for non-heatmap plots ---
         switch (chartType) {
             case 'scatter':
                 trace = this.getScatterTrace(xData, yData, xColumn, yColumn);
@@ -103,15 +155,16 @@ class Plotter {
                 trace = this.getBoxTrace(xData, yData, xColumn, yColumn);
                 layout = this.getLayout(xColumn, yColumn, 'Box Plot');
                 break;
-            default:
-                console.error("Unknown chart type");
-                return;
         }
+    }
     
+    // --- 4. Plotly Rendering (Final step for ALL plots) ---
+    if (trace && layout) {
         Plotly.newPlot(this.container, [trace], layout, { responsive: true }).then(() => {
             this._addEditingListeners();
         });
     }
+}
 
     _addEditingListeners() {
         this.container.on('plotly_doubleclick', (event) => {
@@ -192,6 +245,42 @@ class Plotter {
             y: yData,
             type: 'box',
             name: `Distribution for ${yColumn}`
+        };
+    }
+
+    getHeatmapTrace(zData, labels) {
+    return {
+        z: zData, // The N x N matrix of correlation values
+        x: labels, // Column names for the x-axis
+        y: labels, // Column names for the y-axis
+        type: 'heatmap',
+        colorscale: 'RdBu', // Red-Blue is standard for correlation
+        reversescale: true, 
+        zmin: -1, // Ensure the scale goes from -1 to 1 for perfect correlation
+        zmax: 1
+    };
+    }
+
+    getHeatmapLayout(labels) {
+        return {
+            title: 'Correlation Heatmap',
+            xaxis: { 
+                title: 'Variable',
+                tickangle: -45, 
+                dtick: 1,
+            },
+            yaxis: { 
+                title: 'Variable',
+                dtick: 1, 
+                tickmode: 'auto',
+
+            },
+            margin: {
+                t: 150, 
+                r: 10,
+                l: 250, 
+                b: 150, 
+            }
         };
     }
 }

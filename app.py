@@ -98,6 +98,43 @@ def transpose_data():
     
     except Exception as e:
         return jsonify({"error": f"An error occurred during transposition: {e}"}), 500
+    
+@app.route('/heatmap_data', methods=['POST'])
+def get_heatmap_data():
+    """Calculates the correlation matrix from the input data."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data received for heatmap calculation."}), 400
+
+        df = pd.DataFrame(data)
+        
+        # Robustly convert potential numeric strings to actual numbers
+        for col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+        # Select numeric columns and drop any that are completely empty/NaN
+        numeric_df = df.select_dtypes(include=['number']).dropna(axis=1, how='all')
+        
+        if numeric_df.shape[1] < 2:
+            return jsonify({
+                "error": "Need at least two numerical columns to calculate correlation. Check data types."
+            }), 400
+
+        # Calculate the Correlation Matrix
+        correlation_matrix = numeric_df.corr()
+
+        # Extract data for Plotly
+        z_values = correlation_matrix.values.tolist()
+        labels = correlation_matrix.columns.tolist()
+
+        return jsonify({
+            'z': z_values, 
+            'labels': labels
+        })
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred during heatmap calculation: {e}"}), 500
 
 if __name__ == '__main__':
     # Run the server. In production, you'd use a more robust server.
